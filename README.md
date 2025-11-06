@@ -102,32 +102,7 @@ The in‑memory database console is available at
   "total": 476000.00
 }
 ```
-
-## Pricing Logic
-
-The pricing algorithm mirrors the provided C code with minor fixes:
-
-- A **base price** is selected based on GSM:
-
-  | GSM Range (inclusive lower, exclusive upper) | Base Price |
-  | ------------------------------------------- | ---------- |
-  | [120, 140)                                  | 40 000     |
-  | [181, 201)                                  | 39 700     |
-  | [210, 221)                                  | 40 000     |
-  | [221, 251)                                  | 40 500     |
-  | otherwise                                   | 39 500     |
-
-- **BF surcharges:** For every 2 points of BF from 16 up to 24 inclusive
-  (i.e. 16, 18, 20, 22, 24), the unit price increases by 500.  For
-  example, BF = 20 incurs three increments (at 16, 18 and 20) yielding
-  an additional 1 500 over the base price.
-- **GST** of 12 % is applied to the subtotal.
-
-## Notes
-
-- The pricing logic deliberately leaves width and Cobb unused to match
-  the provided C sample, but they are accepted as input for potential
-  future adjustments.
+### Notes:
 - If you plan to run Kafka, uncomment the broker configuration in
   `docker-compose.yml` and supply a KafkaTemplate bean.  Otherwise, the
   `OrderEventPublisher` logs events for demonstration.
