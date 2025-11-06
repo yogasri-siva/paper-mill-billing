@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Paper Mill Billing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <style>
+        :root {
+            --pink: #ffc0cb;
+            --pink-dark: #ff9fb0;
+            --background: #ffffff;
+            --text: #333;
+            --muted: #666;
+            --radius: 12px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            padding: 2rem;
+        }
+        h1 {
+            margin-top: 0;
+            color: var(--text);
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #fff;
+            border: 2px solid var(--pink);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(255,192,203,0.25);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+        label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 0.25rem;
+        }
+        input {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--pink);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        input:focus {
+            border-color: var(--pink-dark);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255,192,203,0.4);
+        }
+        button {
+            background: var(--pink);
+            color: #222;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        button:hover {
+            background: var(--pink-dark);
+        }
+        .invoice {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border: 1px dashed var(--pink);
+            border-radius: var(--radius);
+            display: none;
+        }
+        .invoice .line {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.25rem 0;
+            font-size: 0.95rem;
+        }
+        .invoice .total {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+        .api-preview {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+        }
+        pre {
+            background: #fff4f6;
+            border: 1px solid var(--pink);
+            border-radius: 8px;
+            padding: 0.8rem;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📄 Paper Mill Billing System</h1>
+    <div class="card">
+        <div class="form-row">
+            <div class="field">
+                <label for="quantity">Quantity</label>
+                <input id="quantity" type="number" min="1" placeholder="10" />
+            </div>
+            <div class="field">
+                <label for="width">Width</label>
+                <input id="width" type="number" step="0.01" placeholder="36" />
+            </div>
+            <div class="field">
+                <label for="gsm">GSM</label>
+                <input id="gsm" type="number" placeholder="120" />
+            </div>
+            <div class="field">
+                <label for="bf">BF</label>
+                <input id="bf" type="number" placeholder="18" />
+            </div>
+            <div class="field">
+                <label for="cobb">Cobb</label>
+                <input id="cobb" type="number" placeholder="30" />
+            </div>
+            <div class="field" style="display:flex; align-items:flex-end;">
+                <button id="generate">Generate Bill</button>
+            </div>
+        </div>
+        <div id="invoice" class="invoice">
+            <div class="line"><span>Price / Unit</span><span id="pricePerUnit">—</span></div>
+            <div class="line"><span>Subtotal</span><span id="subtotal">—</span></div>
+            <div class="line"><span>GST (12%)</span><span id="gst">—</span></div>
+            <div class="line total"><span>Total</span><span id="total">—</span></div>
+            <div class="line" style="font-size:0.8rem; color:var(--muted);"><span>Order ID</span><span id="orderId">—</span></div>
+        </div>
+        <div class="api-preview">
+            <strong>API request</strong>
+            <pre id="reqPreview">{}</pre>
+            <strong>API response</strong>
+            <pre id="resPreview">{}</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    const $ = (id) => document.getElementById(id);
+    $('generate').addEventListener('click', async () => {
+        const payload = {
+            quantity: Number($('quantity').value),
+            width: Number($('width').value),
+            gsm: Number($('gsm').value),
+            bf: Number($('bf').value),
+            cobb: Number($('cobb').value)
+        };
+        // Show request payload
+        $('reqPreview').textContent = JSON.stringify(payload, null, 2);
+        $('resPreview').textContent = '';
+        try {
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            $('resPreview').textContent = JSON.stringify(data, null, 2);
+            if (response.ok) {
+                $('invoice').style.display = 'block';
+                $('pricePerUnit').textContent = `₹ ${Number(data.pricePerUnit).toFixed(2)}`;
+                $('subtotal').textContent = `₹ ${Number(data.subtotal).toFixed(2)}`;
+                $('gst').textContent = `₹ ${Number(data.gst).toFixed(2)}`;
+                $('total').textContent = `₹ ${Number(data.total).toFixed(2)}`;
+                $('orderId').textContent = data.orderId;
+            } else {
+                alert('Error: ' + (data.message || 'Failed to create order'));
+                $('invoice').style.display = 'none';
+            }
+        } catch (e) {
+            alert('Network error');
+            $('invoice').style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
