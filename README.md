@@ -8,7 +8,7 @@ GSM (grams per square metre), BF (burst factor), width and quantity.  A
 single‑page front‑end uses soft pink and white styling to collect input
 and display the calculated invoice.
 
-The pricing logic is inspired by the user’s C function: GSM selects a
+The pricing logic is: GSM selects a
 base price band, BF adds surcharges in 2‑point increments, and a 12 %
 GST is applied on the subtotal.  The system persists orders in an
 in‑memory H2 database and demonstrates how events could be published to
